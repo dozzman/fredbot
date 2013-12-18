@@ -8,9 +8,7 @@ public class PaperChatEvent extends ChatEvent {
 	private int question;
 	@Override
 	public void process(ChatEventCallback callback) {
-		Message msg = new Message();
-		msg.setBody("Getting " + Integer.toString(year) + ", paper " + Integer.toString(paper) + ", question" + Integer.toString(question));
-		callback.chatEventCallback(msg);
+		callback.chatEventCallback("Getting " + Integer.toString(year) + ", paper " + Integer.toString(paper) + ", question" + Integer.toString(question));
 	}
 	
 	public int getYear() {

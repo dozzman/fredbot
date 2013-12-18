@@ -70,6 +70,16 @@ public class FredBot implements ChatEventCallback {
 			}
 			
 		});
+		
+		// finally greet everyone!
+		Message msg = room.createMessage();
+		msg.setBody("Hello everyone, I'm back!");
+		try {
+			room.sendMessage(msg);
+		} catch (XMPPException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	// bot main event loop function
@@ -106,16 +116,6 @@ public class FredBot implements ChatEventCallback {
 			
 			event.process(this);
 		}
-	}
-
-	@Override
-	public void chatEventCallback(Message msg) {
-		try {
-			room.sendMessage(msg);
-		} catch (XMPPException e) {
-			e.printStackTrace();
-		}
-		
 	}
 	
 	public ChatEvent ParseMessage(Message msg)
@@ -178,6 +178,18 @@ public class FredBot implements ChatEventCallback {
 		default:
 			return null;
 		}
+	}
+
+	@Override
+	public void chatEventCallback(String msg) {
+		
+		System.out.println("Attempting to send message to room!");
+		try {
+			room.sendMessage(msg);
+		} catch (XMPPException e) {
+			e.printStackTrace();
+		}
+		
 	}
 	
 	

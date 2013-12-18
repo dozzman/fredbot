@@ -6,9 +6,8 @@ public class HelloChatEvent extends ChatEvent {
 
 	@Override
 	public void process(ChatEventCallback callback) {
-		Message msg = new Message();
-		msg.setBody("Hello!");
-		callback.chatEventCallback(msg);
+		System.out.println("Constructing a new message");
+		callback.chatEventCallback("Hello!");
 		
 	}
 
