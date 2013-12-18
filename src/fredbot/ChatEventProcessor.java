@@ -2,31 +2,13 @@ package fredbot;
 
 import org.jivesoftware.smack.packet.Message;
 
-public class ChatEventProcessor extends Thread {
-	
-	private ChatEventCallback callback;
-	
-	public ChatEventProcessor(ChatEventCallback callback)
-	{
-		this.callback = callback;
-	}
-	
-	public void processEvent(ChatEvent event)
-	{
+public class ChatEventProcessor {
 		
-	}
-	
-	private void processEventHelper(HelloChatEvent event)
+	public void processEvent(HelloChatEvent event, ChatEventCallback callback)
 	{
 		Message msg = new Message();
 		msg.setBody("Hello!");
 		callback.chatEventCallback(msg);
-	}
-
-	@Override
-	public void run() {
-		this.setDaemon(true);
-		
 	}
 
 }

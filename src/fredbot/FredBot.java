@@ -1,14 +1,15 @@
 package fredbot;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-import org.jivesoftware.smack.*;
+import org.jivesoftware.smack.PacketListener;
+import org.jivesoftware.smack.SmackConfiguration;
+import org.jivesoftware.smack.XMPPException;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Packet;
-import org.jivesoftware.smackx.muc.*;
+import org.jivesoftware.smackx.muc.DiscussionHistory;
+import org.jivesoftware.smackx.muc.MultiUserChat;
 
 public class FredBot implements ChatEventCallback {
 
@@ -16,19 +17,18 @@ public class FredBot implements ChatEventCallback {
 	private static String password = "raspberrypi";
 	private static String roomname = "64306_fred_test_room@conf.hipchat.com";
 	private static String nickname = "Fred the Helpful";
-	private static String mention = "@fred ";
-	private static int eventSleepTime = 500;
+	private static String mention = "@fred";
+	private static int queueCapacity = 20;
 	private BlockingQueue<ChatEvent> eventQueue;
-	private Queue<Message> messageQueue;
 	private HipChatConnection conn;
 	private MultiUserChat room;
-	private ChatEventProcessor eventProcessor;
 	
 	
 	// bot initialisation function
 	public void init() {
-		// TODO Auto-generated method stub
-		eventProcessor = new ChatEventProcessor(this);
+		// initialise the queue
+		 eventQueue = new ArrayBlockingQueue<ChatEvent>(queueCapacity);
+		
 		
 		// attempt to connect to hipchat server
 		try {
@@ -43,7 +43,9 @@ public class FredBot implements ChatEventCallback {
 		// join the room
 		room = new MultiUserChat(conn, roomname);
 		try {
-			room.join(nickname);
+			DiscussionHistory history = new DiscussionHistory();
+		    history.setMaxStanzas(0);
+			room.join(nickname,null,history,SmackConfiguration.getPacketReplyTimeout());
 			System.out.println("Subject = " + room.getSubject());
 			
 		} catch (XMPPException e) {
@@ -58,11 +60,12 @@ public class FredBot implements ChatEventCallback {
 			public void processPacket(Packet arg0) {
 				// ok to down-cast as only messages will be sent here
 				Message msg = (Message) arg0;
+				System.out.println("Received message: " + msg.getBody());
 				ChatEvent event = ParseMessage(msg);
 				if(event != null)
 				{
 					// message was for fred
-					enqueueEvent(event);
+					eventQueue.add(event);
 				}
 			}
 			
@@ -78,6 +81,7 @@ public class FredBot implements ChatEventCallback {
 			ChatEvent event = null;
 			
 			try {
+				// block on empty queue
 				event = eventQueue.take();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
@@ -85,6 +89,7 @@ public class FredBot implements ChatEventCallback {
 				return;
 			}
 			
+			// quit if exit event was posted
 			if(event instanceof ExitChatEvent)
 			{
 				System.out.println("Qutting now!");
@@ -98,6 +103,8 @@ public class FredBot implements ChatEventCallback {
 				conn.disconnect();
 				return;
 			}
+			
+			event.process(this);
 		}
 	}
 
@@ -113,8 +120,66 @@ public class FredBot implements ChatEventCallback {
 	
 	public ChatEvent ParseMessage(Message msg)
 	{
-		return null;
+		ChatEvent event;
+		String [] words = msg.getBody().split(" ");
+		
+		for(String w : words)
+		{
+			System.out.println(w);
+		}
+		
+		if(!words[0].equals(mention))
+		{
+			System.out.println("Message not for me!");
+			// message wasn't for fred
+			return null;
+		}
+		
+		// from person is in from[1]
+		String [] from = msg.getFrom().split("/");
+		
+		switch(words[1])
+		{
+		case Commands.HELLO:
+			System.out.println("Received a HELLO command");
+			event = new HelloChatEvent();
+			event.setFrom(from[1]);
+			return event;
+		case Commands.PAPER:
+			System.out.println("Received a PAPER command");
+			event = new PaperChatEvent();
+			// split the string into year,paper,question
+			String [] ypq = words[2].split("[pq]");
+			
+			for(String w : ypq)
+			{
+				System.out.println(w);
+			}
+			// set the paper values in the event
+			try
+			{
+				((PaperChatEvent)event).setYear(Integer.parseInt(ypq[0]));
+				((PaperChatEvent)event).setPaper(Integer.parseInt(ypq[1]));
+				((PaperChatEvent)event).setQuestion(Integer.parseInt(ypq[2]));
+			}
+			catch (NumberFormatException e) {
+				return null;
+			}
+			
+			return event;
+			
+		case Commands.HELP:
+			System.out.println("Received a HELP command");
+			event = new HelpChatEvent();
+			return event;
+		case Commands.EXIT:
+			event = new ExitChatEvent();
+			return event;
+		default:
+			return null;
+		}
 	}
+	
 	
 
 }
