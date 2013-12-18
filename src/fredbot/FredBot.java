@@ -145,14 +145,17 @@ public class FredBot implements ChatEventCallback {
 		// from person is in from[1]
 		String [] from = msg.getFrom().split("/");
 		
-		switch(words[1])
+		
+		// giant if statement 
+		if(words[1].equals(Commands.HELLO))
 		{
-		case Commands.HELLO:
 			System.out.println("Received a HELLO command");
 			event = new HelloChatEvent();
 			event.setFrom(from[1]);
 			return event;
-		case Commands.PAPER:
+		}
+		else if (words[1].equals(Commands.PAPER))
+		{
 			System.out.println("Received a PAPER command");
 			event = new PaperChatEvent();
 			// split the string into year,paper,question
@@ -174,15 +177,20 @@ public class FredBot implements ChatEventCallback {
 			}
 			
 			return event;
-			
-		case Commands.HELP:
+		}
+		else if(words[1].equals(Commands.HELP))
+		{
 			System.out.println("Received a HELP command");
 			event = new HelpChatEvent();
 			return event;
-		case Commands.EXIT:
+		}
+		else if (words[1].equals(Commands.EXIT))
+		{
 			event = new ExitChatEvent();
 			return event;
-		default:
+		}
+		else
+		{
 			return null;
 		}
 	}

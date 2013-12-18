@@ -9,3 +9,5 @@ smack_3_3_1
 *.jar
 *.war
 *.ear
+.classpath
+.settings/

@@ -1,6 +1,5 @@
 package fredbot;
 
-import org.jivesoftware.smack.packet.Message;
 
 public class HelloChatEvent extends ChatEvent {
 
