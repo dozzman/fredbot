@@ -1,6 +1,5 @@
 package fredbot;
 
-import org.jivesoftware.smack.packet.Message;
 
 public class PaperChatEvent extends ChatEvent {
 	private int year;
@@ -8,7 +7,17 @@ public class PaperChatEvent extends ChatEvent {
 	private int question;
 	@Override
 	public void process(ChatEventCallback callback) {
-		callback.chatEventCallback("Getting " + Integer.toString(year) + ", paper " + Integer.toString(paper) + ", question" + Integer.toString(question));
+		callback.chatEventCallback("Getting " + Integer.toString(year) + ", paper " + Integer.toString(paper) + ", question " + Integer.toString(question) + "...");
+		
+		callback.chatEventCallback(Strings.PAPER_PREFIX+"y"+Integer.toString(year)+"p"+Integer.toString(paper)+"q"+Integer.toString(question)+Strings.PAPER_SUFFIX);
+		/*Thread getThread = new Thread() {
+			@Override
+			public void run()
+			{
+				
+			}
+		};*/
+		
 	}
 	
 	public int getYear() {

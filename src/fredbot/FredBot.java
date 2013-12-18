@@ -60,7 +60,14 @@ public class FredBot implements ChatEventCallback {
 			public void processPacket(Packet arg0) {
 				// ok to down-cast as only messages will be sent here
 				Message msg = (Message) arg0;
+				System.out.println("To: " + msg.getTo());
+				System.out.println("From: " + msg.getFrom());
+				
 				System.out.println("Received message: " + msg.getBody());
+				for(String p : msg.getPropertyNames())
+				{
+					System.out.println(p);
+				}
 				ChatEvent event = ParseMessage(msg);
 				if(event != null)
 				{
@@ -149,7 +156,7 @@ public class FredBot implements ChatEventCallback {
 			System.out.println("Received a PAPER command");
 			event = new PaperChatEvent();
 			// split the string into year,paper,question
-			String [] ypq = words[2].split("[pq]");
+			String [] ypq = words[2].split("[ypq]");
 			
 			for(String w : ypq)
 			{
