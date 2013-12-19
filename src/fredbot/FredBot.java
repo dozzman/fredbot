@@ -15,7 +15,7 @@ public class FredBot implements ChatEventCallback {
 
 	private static String username = "64306_586723";
 	private static String password = "raspberrypi";
-	private static String roomname = "64306_fred_test_room@conf.hipchat.com";
+	private static String roomname = "64306_st_johns_college@conf.hipchat.com";
 	private static String nickname = "Fred the Helpful";
 	private static String mention = "@fred";
 	private static int queueCapacity = 20;
