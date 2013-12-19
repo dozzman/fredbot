@@ -2,46 +2,60 @@ package fredbot;
 
 
 public class PaperChatEvent extends ChatEvent {
+	public static final String PAPER_PREFIX = "http://www.cl.cam.ac.uk/teaching/exams/pastpapers/";
+	public static final String PAPER_SUFFIX = ".pdf";
+	
 	private int year;
 	private int paper;
 	private int question;
+	
+	public PaperChatEvent(String from) {
+		super(from);
+	}
+	
 	@Override
-	public void process(ChatEventCallback callback) {
+	public boolean init(String msg)
+	{
+		// split the string into year,paper,question
+		String paperString = msg.split(" ")[1];
+		
+		// strip off leading y
+		if(paperString.startsWith("y"))
+		{
+			paperString = paperString.substring(1);
+		}
+		
+		String [] ypq = paperString.split("[ypq]");
+		
+		// set the paper values in the event
+		try
+		{
+			year = Integer.parseInt(ypq[0]);
+			paper = Integer.parseInt(ypq[1]);
+			question = Integer.parseInt(ypq[2]);
+		}
+		catch (NumberFormatException e) {
+			e.printStackTrace();
+			return false;
+		}
+		
+		return true;
+	}
+	
+	@Override
+	public boolean process(ChatEventCallback callback) {
 		callback.chatEventCallback("Getting " + Integer.toString(year) + ", paper " + Integer.toString(paper) + ", question " + Integer.toString(question) + "...");
 		
-		callback.chatEventCallback(Strings.PAPER_PREFIX+"y"+Integer.toString(year)+"p"+Integer.toString(paper)+"q"+Integer.toString(question)+Strings.PAPER_SUFFIX);
-		/*Thread getThread = new Thread() {
-			@Override
-			public void run()
-			{
-				
-			}
-		};*/
-		
+		callback.chatEventCallback(PAPER_PREFIX+
+				"y"+Integer.toString(year)+
+				"p"+Integer.toString(paper)+
+				"q"+Integer.toString(question)+PAPER_SUFFIX);
+	
+		return true;
 	}
 	
-	public int getYear() {
-		return year;
+	@Override
+	public String command() {
+		return "paper";
 	}
-	
-	public void setYear(int year) {
-		this.year = year;
-	}
-	
-	public int getPaper() {
-		return paper;
-	}
-	
-	public void setPaper(int paper) {
-		this.paper = paper;
-	}
-	
-	public int getQuestion() {
-		return question;
-	}
-	
-	public void setQuestion(int question) {
-		this.question = question;
-	}
-
 }

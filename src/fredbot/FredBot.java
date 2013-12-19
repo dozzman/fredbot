@@ -15,7 +15,7 @@ public class FredBot implements ChatEventCallback {
 
 	private static String username = "64306_586723";
 	private static String password = "raspberrypi";
-	private static String roomname = "64306_st_johns_college@conf.hipchat.com";
+	private static String roomname = "64306_fred_test_room@conf.hipchat.com";
 	private static String nickname = "Fred the Helpful";
 	private static String mention = "@fred";
 	private static int queueCapacity = 20;
@@ -29,7 +29,8 @@ public class FredBot implements ChatEventCallback {
 		// initialise the queue
 		 eventQueue = new ArrayBlockingQueue<ChatEvent>(queueCapacity);
 		
-		
+		// TODO: look in plugin folder for extra ChatEvent classes and load them into the Commands list
+		 
 		// attempt to connect to hipchat server
 		try {
 			conn = new HipChatConnection(username, password);
@@ -43,6 +44,7 @@ public class FredBot implements ChatEventCallback {
 		// join the room
 		room = new MultiUserChat(conn, roomname);
 		try {
+			// don't read any history when joining
 			DiscussionHistory history = new DiscussionHistory();
 		    history.setMaxStanzas(0);
 			room.join(nickname,null,history,SmackConfiguration.getPacketReplyTimeout());
@@ -64,10 +66,6 @@ public class FredBot implements ChatEventCallback {
 				System.out.println("From: " + msg.getFrom());
 				
 				System.out.println("Received message: " + msg.getBody());
-				for(String p : msg.getPropertyNames())
-				{
-					System.out.println(p);
-				}
 				ChatEvent event = ParseMessage(msg);
 				if(event != null)
 				{
@@ -84,7 +82,6 @@ public class FredBot implements ChatEventCallback {
 		try {
 			room.sendMessage(msg);
 		} catch (XMPPException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -101,7 +98,6 @@ public class FredBot implements ChatEventCallback {
 				// block on empty queue
 				event = eventQueue.take();
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 				return;
 			}
@@ -113,86 +109,71 @@ public class FredBot implements ChatEventCallback {
 				try {
 					room.sendMessage("Goodbye!");
 				} catch (XMPPException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				room.leave();
 				conn.disconnect();
 				return;
 			}
-			
 			event.process(this);
 		}
 	}
 	
+	// Function parses the a message and creates an appropriate ChatEvent object based
+	// on the contents
 	public ChatEvent ParseMessage(Message msg)
 	{
 		ChatEvent event;
-		String [] words = msg.getBody().split(" ");
 		
-		for(String w : words)
-		{
-			System.out.println(w);
-		}
-		
-		if(!words[0].equals(mention))
+		if(!msg.getBody().startsWith(mention))
 		{
 			System.out.println("Message not for me!");
-			// message wasn't for fred
 			return null;
 		}
 		
-		// from person is in from[1]
+		String rest = msg.getBody().substring(mention.length()).trim();
 		String [] from = msg.getFrom().split("/");
 		
+		for(Class<? extends ChatEvent> c : Commands.commands)
+		{
+			String command;
+			
+			// attempt to create a new event object
+			try {
+				event = c.getDeclaredConstructor(String.class).newInstance(from[1]);
+			} catch (Exception e) {
+				e.printStackTrace();
+				break;
+			}
+			
+			// attempt to get the command associated with this event object
+			try {
+				command = (String)c.getMethod("command", (Class<?>[])null).invoke(event);
+			} catch (Exception e) {
+				e.printStackTrace();
+				break;
+			}
+			
+			// continue if the command doesn't match
+			if(!rest.matches(command+".*"))
+			{
+				continue;
+			}
+			
+			System.out.println("Received a '" + command + "' command");
+			
+			// if initialisation goes OK, return this new event
+			if(event.init(rest))
+			{
+				return event;
+			}
+			
+			System.out.println("Event initialisation of command '" + command + "' failed! Moving on...");
+		}
 		
-		// giant if statement 
-		if(words[1].equals(Commands.HELLO))
-		{
-			System.out.println("Received a HELLO command");
-			event = new HelloChatEvent();
-			event.setFrom(from[1]);
-			return event;
-		}
-		else if (words[1].equals(Commands.PAPER))
-		{
-			System.out.println("Received a PAPER command");
-			event = new PaperChatEvent();
-			// split the string into year,paper,question
-			String [] ypq = words[2].split("[ypq]");
-			
-			for(String w : ypq)
-			{
-				System.out.println(w);
-			}
-			// set the paper values in the event
-			try
-			{
-				((PaperChatEvent)event).setYear(Integer.parseInt(ypq[0]));
-				((PaperChatEvent)event).setPaper(Integer.parseInt(ypq[1]));
-				((PaperChatEvent)event).setQuestion(Integer.parseInt(ypq[2]));
-			}
-			catch (NumberFormatException e) {
-				return null;
-			}
-			
-			return event;
-		}
-		else if(words[1].equals(Commands.HELP))
-		{
-			System.out.println("Received a HELP command");
-			event = new HelpChatEvent();
-			return event;
-		}
-		else if (words[1].equals(Commands.EXIT))
-		{
-			event = new ExitChatEvent();
-			return event;
-		}
-		else
-		{
-			return null;
-		}
+		return null;
+		
+		
 	}
 
 	@Override
