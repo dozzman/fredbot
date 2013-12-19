@@ -11,3 +11,4 @@ smack_3_3_1
 *.ear
 .classpath
 .settings/
+.project
